@@ -1,9 +1,15 @@
 % ==========================================================
-% fMRI Data Exploration Script with Enhanced Visualizations
+% fMRI Data Exploration Script with Enhanced Visualizations (Saving Images)
 % ==========================================================
 
 % Define the directory containing the fMRI files
 fmri_dir = 'C:\\Users\\Varadh\\Desktop\\Projects\\fMRI-MATLAB\\fMRI';
+
+% Define directory for saving images
+output_dir = 'C:\\Users\\Varadh\\Desktop\\Projects\\fMRI-MATLAB\\Results\\';
+if ~exist(output_dir, 'dir')
+    mkdir(output_dir); % Create the directory if it doesn't exist
+end
 
 % Load a few .nii files for demonstration purposes
 subject_id = '414229'; % Specify the subject ID
@@ -11,7 +17,6 @@ files = dir(fullfile(fmri_dir, ['wsfREG_rc_', subject_id, '_*.nii']));
 
 % Limit the number of files to process to avoid excessive computation
 files = files(1:min(3, length(files))); % Load up to 3 files
-
 
 % ==========================================================
 % Step 1: Load the first fMRI file and extract metadata
@@ -28,7 +33,6 @@ voxel_size = nii(1).mat(1:3, 1:3); % Extract voxel scaling factors
 disp('Voxel Size (mm):');
 disp(abs(diag(voxel_size)));  % Display voxel size as absolute values
 
-
 % ==========================================================
 % Step 2: Colored Visualization of Brain Slices
 % ==========================================================
@@ -44,6 +48,8 @@ axis image;
 colorbar;
 title(['Colored fMRI Slice - ', files(1).name]);
 
+% Save the figure as a PNG file
+saveas(gcf, fullfile(output_dir, 'Colored_fMRI_Slice.png'));
 
 % ==========================================================
 % Step 3: Cortical Activation Map
@@ -71,12 +77,22 @@ colorbar;
 title('Cortical Activation Map');
 axis image;
 
+% Save the figure
+saveas(gcf, fullfile(output_dir, 'Cortical_Activation_Map.png'));
 
 % ==========================================================
-% Step 4: Overlay Brain Mask on fMRI Slice
+% Step 4: Generate Brain Mask and Overlay on fMRI Slice
 % ==========================================================
+% Generate a binary brain mask to remove non-brain regions
 
-% Apply a brain mask to remove non-brain regions from visualization
+% Compute a threshold to define brain tissue (exclude background noise)
+threshold = prctile(img(img > 0), 10); % 10th percentile of nonzero intensities
+brain_mask = img > threshold; % Apply threshold to create the mask
+
+% Ensure the mask is in double format for visualization
+brain_mask = double(brain_mask);
+
+% Apply the brain mask to remove non-brain regions from visualization
 overlay = img(:,:,mid_slice);
 overlay(~brain_mask(:,:,mid_slice)) = NaN; % Mask out non-brain regions
 
@@ -92,6 +108,8 @@ hold off;
 colorbar;
 title('Brain Mask Overlay on fMRI Slice');
 
+% Save the figure
+saveas(gcf, fullfile(output_dir, 'Brain_Mask_Overlay.png'));
 
 % ==========================================================
 % Step 5: Comparing Activation in Different Brain Regions
@@ -129,12 +147,17 @@ for field = fieldnames(brain_regions)'
     xlabel('Voxel Intensity');
     ylabel('Frequency');
     title(['Intensity Distribution - ', region]);
+
+    % Save the histogram
+    saveas(gcf, fullfile(output_dir, ['Intensity_Distribution_', region, '.png']));
 end
 
 % ==========================================================
-% Summary of Exploratory Data Analysis
+% Summary of Exploratory Data Analysis (With Saved Images)
 % ==========================================================
 % 1. Extracted voxel intensity variations across slices.
 % 2. Identified approx. key brain regions and analyzed their activation levels.
 % 3. Visualized fMRI intensity distributions to observe spatial patterns.
+% 4. Saved all generated figures as PNG files in the output directory.
 % ==========================================================
+
